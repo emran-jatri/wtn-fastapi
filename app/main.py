@@ -1,7 +1,10 @@
 from typing import Union
 from fastapi import FastAPI
 from .routers import routers
+from dotenv import dotenv_values
+from pymongo import MongoClient
 
+config = dotenv_values(".env")
 app = FastAPI()
 
 for router in routers:
@@ -11,7 +14,10 @@ for router in routers:
         tags=router['tags']
     )
 
-
+@app.on_event("startup")
+def startup_db_client():
+    app.mongodb_client = MongoClient(config["MONGODB_URI"])
+    app.database = app.mongodb_client[config["DB_NAME"]]
 # @app.get("/")
 # def read_root():
 #     return {"Hello": "World"}
