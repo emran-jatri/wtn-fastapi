@@ -7,6 +7,15 @@ from pymongo import MongoClient
 config = dotenv_values(".env")
 app = FastAPI()
 
+@app.on_event("startup")
+def startup_db_client():
+    app.mongodb_client = MongoClient(config["MONGODB_URI"])
+    app.database = app.mongodb_client[config["DB_NAME"]]
+
+@app.on_event("shutdown")
+def shutdown_db_client():
+    app.mongodb_client.close()
+
 for router in routers:
     app.include_router(
         router=router['router'],
@@ -14,10 +23,6 @@ for router in routers:
         tags=router['tags']
     )
 
-@app.on_event("startup")
-def startup_db_client():
-    app.mongodb_client = MongoClient(config["MONGODB_URI"])
-    app.database = app.mongodb_client[config["DB_NAME"]]
 # @app.get("/")
 # def read_root():
 #     return {"Hello": "World"}
